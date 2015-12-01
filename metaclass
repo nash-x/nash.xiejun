@@ -1,0 +1,57 @@
+openstack中的元类
+
+@six.add_metaclass(YourMateClass)
+class YourClass(object):
+pass
+
+http://blog.jobbole.com/21351/
+http://stackoverflow.com/questions/100003/what-is-a-metaclass-in-python
+
+
+	* 元类
+
+元类，是用来生成类的类；
+内建元类就是type
+可以用如下内建元类type的使用方式来创建类：
+     type(类名, 父类的元组（针对继承的情况，可以为空），包含属性的字典（名称和值）)
+type 接受一个字典来为类定义属性，因此
+>>> class Foo(object):
+…       bar = True
+可以翻译为：
+>>> Foo = type('Foo', (), {'bar':True})
+当然，你可以向这个类继承，所以，如下的代码：
+>>> class FooChild(Foo):
+…       pass
+就可以写成：
+>>> FooChild = type('FooChild', (Foo,),{})
+>>> print FooChild
+<class '__main__.FooChild'>
+>>> print FooChild.bar   # bar属性是由Foo继承而来
+True
+最终你会希望为你的类增加方法。只需要定义一个有着恰当签名的函数并将其作为属性赋值就可以了。
+>>> def echo_bar(self):
+…       print self.bar
+…
+>>> FooChild = type('FooChild', (Foo,), {'echo_bar': echo_bar})
+>>> hasattr(Foo, 'echo_bar')
+False
+>>> hasattr(FooChild, 'echo_bar')
+True
+>>> my_foo = FooChild()
+>>> my_foo.echo_bar()
+True
+你可以看到，在Python中，类也是对象，你可以动态的创建类。这就是当你使用关键字class时Python在幕后做的事情，而这就是通过元类来实现的。
+
+
+如果类中 __metaclass__ 被重写，那么类就会用它来创建类；如果没被重写，类构建的时候，就用内建函数type来构建类
+自定义元类，一般使用继承type来完成，在继承中，通过重写__new__方法，完成对类属性的修改，然后复用type.__new__方法来构建类；
+
+class UpperAttrMetaclass(type):
+    def __new__(cls, name, bases, dct):
+        attrs = ((name, value) for name, value in dct.items() if not name.startswith('__')
+        uppercase_attr  = dict((name.upper(), value) for name, value in attrs)
+        return type.__new__(cls, name, bases, uppercase_attr)
+
+类属性的修改，包括新增、删除、更改类属性
+
+
